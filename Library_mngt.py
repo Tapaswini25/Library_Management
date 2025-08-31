@@ -63,14 +63,14 @@ class Library:
 library = Library()
 
 # Add books
-b1 = Book("1984", "George Orwell", "12345")
-b2 = Book("The Hobbit", "J.R.R. Tolkien", "67890")
+b1 = Book("The Mountain is YOU", "Brianna Wiest", "12345")
+b2 = Book("101 Essays that will change the way you think", "Brianna Wiest", "67890")
 library.add_book(b1)
 library.add_book(b2)
 
 # Add members
-m1 = Member("Alice", "M001")
-m2 = Member("Bob", "M002")
+m1 = Member("Bella", "M001")
+m2 = Member("Rocxen", "M002")
 library.add_member(m1)
 library.add_member(m2)
 
@@ -78,7 +78,7 @@ library.add_member(m2)
 library.show_books()
 
 # Borrow & Return
-m1.borrow_book(b1)   # Alice borrows 1984
-m2.borrow_book(b1)   # Bob tries to borrow 1984 (should fail)
-m1.return_book(b1)   # Alice returns 1984
-m2.borrow_book(b1)   # Now Bob can borrow it
+m1.borrow_book(b1)   # Bella borrows The Mountain is You
+m2.borrow_book(b1)   # Rocxen tries to borrow The Mountain is You (fails)
+m1.return_book(b1)   # Bella returns The Mountain is You
+m2.borrow_book(b1)   # Now Recxen can borrow it
