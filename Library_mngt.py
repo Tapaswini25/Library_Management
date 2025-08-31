@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timedelta
 # ----------------------------
 # Library Management System 
 # ----------------------------
@@ -29,26 +30,36 @@ class Book:
 
 
 class Member:
-    def __init__(self, name, member_id):
+    def __init__(self, name, member_id, borrowed_books=None):
         self.name = name
         self.member_id = member_id
         self.borrowed_books = borrowed_books if borrowed_books else []
 
-    def borrow_book(self, book):
+    def borrow_book(self, book, days=14):
         if book.available:
             book.available = False
-            self.borrowed_books.append(book)
-            print(f"\n {self.name} borrowed '{book.title}'")
+            due_date = (datetime.now() + timedelta(days=days)).strftime("%d-%m-%Y")
+            self.borrowed_books.append({"isbn": book.isbn, "due_date": due_date})
+            print(f"\n {self.name} borrowed '{book.title}'. Due date: {due_date}")
         else:
             print(f"\n Sorry, '{book.title}' is not available.")
 
     def return_book(self, book):
-        if book.isbn in self.borrowed_books:
-            book.available = True
-            self.borrowed_books.remove(book)
-            print(f"\n {self.name} returned '{book.title}'")
-        else:
-            print(f"\n {self.name} does not have '{book.title}' borrowed.")
+        for record in self.borrowed_books:
+            if record["isbn"] == book.isbn:
+                due_date = datetime.strptime(record["due_date"], "%d-%m-%Y")
+                today = datetime.now()
+                fine = 0
+                if today > due_date:
+                    days_late = (today - due_date).days
+                    fine = days_late * 10  # Rs.10 per day late
+                book.available = True
+                self.borrowed_books.remove(record)
+                print(f"\n {self.name} returned '{book.title}'")
+                if fine > 0:
+                    print(f" Book was {days_late} days late. Fine = Rs.{fine}")
+                return
+        print(f"\n {self.name} does not have '{book.title}' borrowed.")
 
     def to_dict(self):
         return {
@@ -90,6 +101,21 @@ class Library:
             print("No books in the library yet.")
         for book in self.books:
             print(book)
+    
+    def search_books(self, keyword):
+        print(f"\n Search Results for '{keyword}':")
+        results = []
+        for book in self.books:
+            if (keyword.lower() in book.title.lower() or 
+                keyword.lower() in book.author.lower() or 
+                keyword == book.isbn):
+                results.append(book)
+
+        if results:
+            for book in results:
+                print(book)
+        else:
+            print(" No matching books found.")
 
 
     def find_book(self, isbn):
@@ -133,7 +159,8 @@ def main():
         print("3. Show Books")
         print("4. Borrow Book")
         print("5. Return Book")
-        print("6. Exit")
+        print("6. Search Books")
+        print("7. Exit")
 
         choice = input("Enter your choice: ")
 
@@ -174,6 +201,10 @@ def main():
                 print("\n Invalid member ID or ISBN.")
 
         elif choice == "6":
+            keyword = input("Enter title or author or isbn to search: ")
+            library.search_books(keyword)
+
+        elif choice == "7":
             print("\n Exiting... Goodbye!")
             library.save_data()
             break
