@@ -1,5 +1,7 @@
+import json
+import os
 # ----------------------------
-# Library Management System (Menu Driven)
+# Library Management System 
 # ----------------------------
 
 class Book:
@@ -13,12 +15,24 @@ class Book:
         status = "Available" if self.available else "Borrowed"
         return f"{self.title} by {self.author} (ISBN: {self.isbn}) - {status}"
 
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "author": self.author,
+            "isbn": self.isbn,
+            "available": self.available
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return Book(data["title"], data["author"], data["isbn"], data["available"])
+
 
 class Member:
     def __init__(self, name, member_id):
         self.name = name
         self.member_id = member_id
-        self.borrowed_books = []
+        self.borrowed_books = borrowed_books if borrowed_books else []
 
     def borrow_book(self, book):
         if book.available:
@@ -29,26 +43,46 @@ class Member:
             print(f"\n Sorry, '{book.title}' is not available.")
 
     def return_book(self, book):
-        if book in self.borrowed_books:
+        if book.isbn in self.borrowed_books:
             book.available = True
             self.borrowed_books.remove(book)
             print(f"\n {self.name} returned '{book.title}'")
         else:
             print(f"\n {self.name} does not have '{book.title}' borrowed.")
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "member_id": self.member_id,
+            "borrowed_books": self.borrowed_books
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return Member(data["name"], data["member_id"], data["borrowed_books"])
+
 
 class Library:
-    def __init__(self):
+    def __init__(self,data_file="Library.json"):
         self.books = []
         self.members = []
+        self.data_file = data_file
+        self.load_data()
 
     def add_book(self, book):
         self.books.append(book)
         print(f"\n Book '{book.title}' added to the library.")
+        self.save_data()
 
     def add_member(self, member):
         self.members.append(member)
         print(f"\n Member '{member.name}' added to the library.")
+        self.save_data()
+
+    def add_member(self, member):
+        self.members.append(member)
+        print(f"\n Member '{member.name}' added to the library.")
+        self.save_data()
 
     def show_books(self):
         print("\n===== Library Books =====")
@@ -56,6 +90,7 @@ class Library:
             print("No books in the library yet.")
         for book in self.books:
             print(book)
+
 
     def find_book(self, isbn):
         for book in self.books:
@@ -68,6 +103,21 @@ class Library:
             if member.member_id == member_id:
                 return member
         return None
+    
+    def save_data(self):
+        data = {
+            "books": [book.to_dict() for book in self.books],
+            "members": [member.to_dict() for member in self.members]
+        }
+        with open(self.data_file, "w") as f:
+            json.dump(data, f, indent=4)
+
+    def load_data(self):
+        if os.path.exists(self.data_file):
+            with open(self.data_file, "r") as f:
+                data = json.load(f)
+                self.books = [Book.from_dict(b) for b in data.get("books", [])]
+                self.members = [Member.from_dict(m) for m in data.get("members", [])]
 
 
 # ----------------------------
@@ -108,6 +158,7 @@ def main():
             book = library.find_book(isbn)
             if member and book:
                 member.borrow_book(book)
+                library.save_data()
             else:
                 print("\n Invalid member ID or ISBN.")
 
@@ -118,11 +169,13 @@ def main():
             book = library.find_book(isbn)
             if member and book:
                 member.return_book(book)
+                library.save_data()
             else:
                 print("\n Invalid member ID or ISBN.")
 
         elif choice == "6":
             print("\n Exiting... Goodbye!")
+            library.save_data()
             break
         else:
             print("\n Invalid choice. Try again.")
